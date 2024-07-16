@@ -1,0 +1,143 @@
+﻿@page
+@model Personal_Diary.Pages.CalendarModel
+@{
+	ViewData["Title"] = "Календарь";
+}
+
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#taskModal">Добавить задачу</button>
+<div id="calendar"></div>
+
+
+<div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="taskModalLabel">Детали задачи</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<form id="taskForm">
+					<input type="hidden" id="taskId">
+					<div class="form-group">
+						<label for="taskTitle">Название задачи</label>
+						<input type="text" class="form-control" id="taskTitle" required>
+					</div>
+					<div class="form-group">
+						<label for="taskStartDateTime">Дата и время начала</label>
+						<input type="datetime-local" class="form-control" id="taskStartDateTime" required>
+					</div>
+					<div class="form-group">
+						<label for="taskEndDateTime">Дата и время окончания</label>
+						<input type="datetime-local" class="form-control" id="taskEndDateTime" required>
+					</div>
+					<div class="form-group">
+						<label for="taskDescription">Заметка</label>
+						<textarea class="form-control" id="taskDescription"></textarea>
+					</div>
+					<div class="form-group">
+						<label for="taskType">Тип задачи</label>
+						<select class="form-control" id="taskType" required>
+							@foreach (var taskType in Model.TaskTypes)
+							{
+								<option value="@taskType.Id">@taskType.Name</option>
+							}
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="taskFrequency">Частота повторения</label>
+						<select class="form-control" id="taskFrequency" required>
+							<option value="0">Без повторений</option>
+							<option value="1">Каждый день</option>
+							<option value="2">Каждую неделю</option>
+							<option value="3">Каждый месяц</option>
+							<option value="4">Каждый год</option>
+						</select>
+					</div>
+					<button type="submit" class="btn btn-primary">Сохранить</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+
+@section Scripts {
+	<script src='~/lib/fullcalendar-6.1.14/dist/index.global.min.js'></script>
+	<script src='~/lib/fullcalendar-6.1.14/packages/core/locales/ru.global.js'></script>
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+		<script>
+
+		document.addEventListener('DOMContentLoaded', function () {
+			var calendarEl = document.getElementById('calendar');
+			var calendar = new FullCalendar.Calendar(calendarEl, {
+				height: 'auto',
+				slotDuration: '00:15:00',
+				nowIndicator: true,
+				locale: 'ru',
+				initialView: 'timeGridWeek',
+				events: @Html.Raw(Model.TasksJson),
+				eventClick: function (info) {
+					$('#taskModalLabel').text('Редактировать задачу');
+					$('#taskId').val(info.event.id);
+					$('#taskTitle').val(info.event.title);
+					$('#taskStartDateTime').val(info.event.start.toISOString().slice(0, 16));
+					$('#taskEndDateTime').val(info.event.end.toISOString().slice(0, 16));
+					$('#taskDescription').val(info.event.description);
+					$('#taskType').val(info.event.extendedProps.taskTypeId);
+					$('#taskFrequency').val(info.event.extendedProps.repeatFrequency);
+
+					$('#taskModal').modal('show');
+				},
+				eventMouseEnter: function (info) {
+					$(info.el).tooltip({
+						title: info.event.extendedProps.description,
+						placement: 'top',
+						trigger: 'hover',
+						container: 'body'
+					}).tooltip('show');
+				}
+			});
+			calendar.render();
+
+			$('#taskForm').on('submit', function (e) {
+				e.preventDefault();
+
+				var task = {
+					id: $('#taskId').val(),
+					title: $('#taskTitle').val(),
+					start: $('#taskStartDateTime').val(),
+					end: $('#taskEndDateTime').val(),
+					description: $('#taskDescription').val(),
+					taskTypeId: $('#taskType').val(),
+					repeatFrequency: $('#taskFrequency').val()
+				};
+				var url = task.id ? '@Url.Page("/Tasks/Calendar", "UpdateTask")' : '@Url.Page("/Tasks/Calendar", "CreateTask")';
+				var method = task.id ? 'POST' : 'POST';
+				$.ajax({
+					url: url,
+					method: method,
+					contentType: 'application/json',
+					data: JSON.stringify(task),
+					success: function () {
+						calendar.refetchEvents();
+						$('#taskModal').modal('hide');
+					},
+					error: function () {
+						alert('Ошибка при сохранении задачи');
+					}
+				});
+			});
+		});
+	</script>
+}
+
+
+
+

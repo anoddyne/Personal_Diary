@@ -14,7 +14,7 @@ namespace Personal_Diary.Pages
 
         public void OnGet()
         {
-
+            Response.Redirect("/Calendar");
         }
     }
 }

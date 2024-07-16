@@ -18,5 +18,10 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+}
+
+#calendar {
+    max-height: 80vh;
+    overflow-y: auto; 
 }

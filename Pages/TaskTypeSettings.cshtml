@@ -1,0 +1,126 @@
+﻿@page
+@model Personal_Diary.Pages.TaskTypeSettingsModel
+@{
+	ViewData["Title"] = "Настройка типов задач";
+}
+
+
+<div class="container mt-4">
+    <h2>Настройка типов задач</h2>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#taskTypeModal">Добавить тип задачи</button>
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Цвет</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var type in Model.TaskTypes)
+            {
+                <tr>
+                    <td>@type.Name</td>
+                    <td><div style="width: 20px; height: 20px; background-color: @type.Color;"></div></td>
+                    <td>
+                        <button class="btn btn-warning" onclick="editTaskType(@type.Id)">Редактировать</button>
+                        <button class="btn btn-danger" onclick="deleteTaskType(@type.Id)">Удалить</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Модальное окно для добавления/редактирования типа задачи -->
+<div class="modal fade" id="taskTypeModal" tabindex="-1" role="dialog" aria-labelledby="taskTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskTypeModalLabel">Тип задачи</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="taskTypeForm">
+                    <input type="hidden" id="taskTypeId" />
+                    <div class="form-group">
+                        <label for="taskTypeName">Название</label>
+                        <input type="text" class="form-control" id="taskTypeName" required  />
+                    </div>
+                    <div class="form-group">
+                        <label for="taskTypeColor">Цвет</label>
+                        <input type="color" class="form-control" id="taskTypeColor" required />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="saveTaskTypeButton">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="lib/jquery/dist/jquery.min.js"></script>
+    <script src="lib/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('#saveTaskTypeButton').click(function () {
+                var id = $('#taskTypeId').val();
+                var name = $('#taskTypeName').val();
+                var color = $('#taskTypeColor').val();
+                console.log('Sending data:', { id: id, name: name, color: color });
+
+
+                var url = id ? '@Url.Page("/TaskTypeSettings", "UpdateTaskType")' : '@Url.Page("/TaskTypeSettings", "CreateTaskType")';
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        Id: id,
+                        Name: name,
+                        Color: color
+                    }),
+                    success: function (response) {
+                        $('#taskTypeModal').modal('hide');
+                        if (response.success) {
+                            location.reload(); // Перезагрузка страницы для обновления списка типов задач
+                        } else {
+                            alert('Ошибка сохранения типа задачи');
+                        }
+                    },
+                    error: function (error) {
+                        console.error('Ошибка сохранения типа задачи:', error);
+                    }
+                });
+            });
+        });
+
+        function editTaskType(id) {
+            $.get('@Url.Page("/TaskTypeSettings", "TaskType")', { id: id }, function (data) {
+                $('#taskTypeId').val(data.id);
+                $('#taskTypeName').val(data.name);
+                $('#taskTypeColor').val(data.color);
+                $('#taskTypeModal').modal('show');
+            });
+        }
+
+        function deleteTaskType(id) {
+            if (confirm('Вы уверены, что хотите удалить этот тип задачи?')) {
+                $.post('@Url.Page("/TaskTypeSettings", "DeleteTaskType")', { id: id }, function (response) {
+                    if (response.success) {
+                        location.reload(); // Перезагрузка страницы для обновления списка типов задач
+                    } else {
+                        alert('Ошибка удаления типа задачи');
+                    }
+                });
+            }
+        }
+    </script>
+}
