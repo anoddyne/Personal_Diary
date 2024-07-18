@@ -4,7 +4,7 @@ using Personal_Diary;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
-
+builder.Services.AddLogging();
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<PersonalDiaryDbContext>(options => options.UseSqlite(connection));
 

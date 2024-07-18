@@ -4,7 +4,7 @@
 	ViewData["Title"] = "Календарь";
 }
 
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#taskModal">Добавить задачу</button>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">Добавить задачу</button>
 <div id="calendar"></div>
 
 
@@ -13,7 +13,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="taskModalLabel">Детали задачи</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -70,8 +70,6 @@
 	<script src='~/lib/fullcalendar-6.1.14/dist/index.global.min.js'></script>
 	<script src='~/lib/fullcalendar-6.1.14/packages/core/locales/ru.global.js'></script>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-	<script src="~/lib/jquery/dist/jquery.min.js"></script>
-	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 		<script>
 
 		document.addEventListener('DOMContentLoaded', function () {
