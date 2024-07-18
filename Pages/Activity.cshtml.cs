@@ -6,39 +6,67 @@ using System.Text.Json;
 
 namespace Personal_Diary.Pages
 {
-    public class ActivityModel : PageModel
-    {
+	public class ActivityModel : PageModel
+	{
 		private readonly PersonalDiaryDbContext _context;
-
 		public ActivityModel(PersonalDiaryDbContext context)
 		{
 			_context = context;
 		}
 
-		public string ActivityDataJson { get; set; }
+		public List<WeeklyActivityData> WeeklyActivityData { get; set; }
 
-		/*public async Task OnGetAsync()
+		public async Task OnGetAsync()
 		{
-			var tasks = await _context.Tasks
+			var currentDate = DateTime.Now.Date;
+			var fourWeeksAgo = currentDate.AddDays(-28);
+
+			var completedTasks = await _context.Tasks
+				.Where(t => t.Status == Task_Status.Completed && t.EndDateTime >= fourWeeksAgo)
 				.Include(t => t.TaskType)
-				.Where(t => t.Status == Task_Status.Completed)
 				.ToListAsync();
 
-			var groupedData = tasks
-				.GroupBy(t => new { Week = EF.Functions.DatePart("week", t.StartDateTime), t.TaskType.Name })
-				.Select(g => new
+			WeeklyActivityData = new List<WeeklyActivityData>();
+
+			for (int i = 0; i < 4; i++)
+			{
+				var weekStart = currentDate.AddDays(-7 * i);
+				var weekEnd = weekStart.AddDays(7);
+
+				var weeklyData = new WeeklyActivityData
 				{
-					Week = g.Key.Week,
-					TaskType = g.Key.Name,
-					Hours = g.Sum(t => (t.EndDateTime - t.StartDateTime).TotalHours)
-				})
-				.ToList();
+					WeekStart = weekStart,
+					ActivityByType = completedTasks
+						.Where(t => t.EndDateTime >= weekStart && t.EndDateTime < weekEnd)
+						.GroupBy(t => t.TaskType)
+						.Select(g => new ActivityByType
+						{
+							TypeName = g.Key.Name,
+							Color = g.Key.Color,
+							Hours = g.Sum(t => (t.EndDateTime - t.StartDateTime).TotalHours)
+						})
+						.ToList()
+				};
 
-			ActivityDataJson = JsonSerializer.Serialize(groupedData);
-		}*/
+				WeeklyActivityData.Add(weeklyData);
+			}
 
-		public void OnGet()
-        {
-        }
-    }
+			WeeklyActivityData.Reverse(); // Чтобы текущая неделя была последней
+		}
+	}
+
+	public class WeeklyActivityData
+	{
+		public DateTime WeekStart { get; set; }
+		public List<ActivityByType> ActivityByType { get; set; }
+	}
+
+	public class ActivityByType
+	{
+		public string TypeName { get; set; }
+		public string Color { get; set; }
+		public double Hours { get; set; }
+	}
+
 }
+
