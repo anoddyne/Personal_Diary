@@ -66,24 +66,24 @@ For the release version, download the latest release from the [Releases](https:/
 - `Migrations/` - Contains database migrations.
 
 ### Creating a New Task
-1. Click on the `Добавить задачу` button in the upper left corner.
+1. Click on the `Р”РѕР±Р°РІРёС‚СЊ Р·Р°РґР°С‡Сѓ` button in the upper left corner.
 2. Fill in the task details in the modal form.
-3. Click `Сохранить` in the lower right corner of the modal window to create the task.
+3. Click `РЎРѕС…СЂР°РЅРёС‚СЊ` in the lower right corner of the modal window to create the task.
 ### Editing a Task
 1. Click on a task in the calendar.
 2. Edit the task details in the modal form.
-3. Click `Сохранить` in the lower right corner of the modal window next to the `Удалить` button to update the task.
+3. Click `РЎРѕС…СЂР°РЅРёС‚СЊ` in the lower right corner of the modal window next to the `РЈРґР°Р»РёС‚СЊ` button to update the task.
 ### Deleting a Task
 1. Right-click on a task in the calendar.
-2. Select `Удалить` (2nd option) from the context menu.
+2. Select `РЈРґР°Р»РёС‚СЊ` (2nd option) from the context menu.
 ### Managing Task Types
-1. Go to the `Настройка типов задач` tab.
-2. Click on `Добавить тип задачи` to create a new task type or click `Редактировать` on an existing task type to edit or click `Удалить` to remove the task type.
+1. Go to the `РќР°СЃС‚СЂРѕР№РєР° С‚РёРїРѕРІ Р·Р°РґР°С‡` tab.
+2. Click on `Р”РѕР±Р°РІРёС‚СЊ С‚РёРї Р·Р°РґР°С‡Рё` to create a new task type or click `Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ` on an existing task type to edit or click `РЈРґР°Р»РёС‚СЊ` to remove the task type.
 3. Fill in the name and select a color for the task type.
-4. Click `Сохранить` to save changes or `Закрыть` to close the modal window.
+4. Click `РЎРѕС…СЂР°РЅРёС‚СЊ` to save changes or `Р—Р°РєСЂС‹С‚СЊ` to close the modal window.
 
 ### Viewing Activity Statistics
-1. Go to the `Активность` tab.
+1. Go to the `РђРєС‚РёРІРЅРѕСЃС‚СЊ` tab.
 2. View the bar chart displaying activity hours for each task type over the past four weeks.
 3. The Y-axis shows the number of hours, and the X-axis shows the weeks.
 4. Each bar represents a task type with its corresponding color and displays the number of hours and task type name.
