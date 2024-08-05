@@ -4,41 +4,41 @@
 	ViewData["Title"] = "Календарь";
 }
 
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">Добавить задачу</button>
+<h1>@ViewData["Title"]</h1>
+<button type="button" class="btn btn-primary" id="addTaskButton">Добавить задачу</button>
+
 <div id="calendar"></div>
-
-
-<div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModalLabel" aria-hidden="true">
+<div id="taskModal" class="modal fade" tabindex="-1" role="dialog">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title" id="taskModalLabel">Детали задачи</h5>
+				<h5 class="modal-title">Детали задачи</h5>
 				<button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
 			<div class="modal-body">
-				<form id="taskForm">
+				<form id="taskForm" asp-antiforgery="true">
 					<input type="hidden" id="taskId">
 					<div class="form-group">
 						<label for="taskTitle">Название задачи</label>
 						<input type="text" class="form-control" id="taskTitle" required>
 					</div>
 					<div class="form-group">
-						<label for="taskStartDateTime">Дата и время начала</label>
-						<input type="datetime-local" class="form-control" id="taskStartDateTime" required>
+						<label for="startDateTime">Дата и время начала</label>
+						<input type="datetime-local" class="form-control" id="startDateTime" required>
 					</div>
 					<div class="form-group">
-						<label for="taskEndDateTime">Дата и время окончания</label>
-						<input type="datetime-local" class="form-control" id="taskEndDateTime" required>
+						<label for="endDateTime">Дата и время окончания</label>
+						<input type="datetime-local" class="form-control" id="endDateTime" required>
 					</div>
 					<div class="form-group">
-						<label for="taskDescription">Заметка</label>
-						<textarea class="form-control" id="taskDescription"></textarea>
+						<label for="description">Описание</label>
+						<textarea class="form-control" id="description"></textarea>
 					</div>
 					<div class="form-group">
-						<label for="taskType">Тип задачи</label>
-						<select class="form-control" id="taskType" required>
+						<label for="taskTypeId">Тип задачи</label>
+						<select class="form-control" id="taskTypeId" required>
 							@foreach (var taskType in Model.TaskTypes)
 							{
 								<option value="@taskType.Id">@taskType.Name</option>
@@ -46,8 +46,8 @@
 						</select>
 					</div>
 					<div class="form-group">
-						<label for="taskFrequency">Частота повторения</label>
-						<select class="form-control" id="taskFrequency" required>
+						<label for="frequency">Частота повторения</label>
+						<select class="form-control" id="frequency" required>
 							<option value="0">Без повторений</option>
 							<option value="1">Каждый день</option>
 							<option value="2">Каждую неделю</option>
@@ -55,87 +55,225 @@
 							<option value="4">Каждый год</option>
 						</select>
 					</div>
-					<button type="submit" class="btn btn-primary">Сохранить</button>
+
 				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" id="saveTask">Сохранить</button>
+				<button type="button" class="btn btn-danger" id="deleteTask" style="display: none;">Удалить</button>
 			</div>
 		</div>
 	</div>
 </div>
 
-
-
-
-
 @section Scripts {
 	<script src='~/lib/fullcalendar-6.1.14/dist/index.global.min.js'></script>
 	<script src='~/lib/fullcalendar-6.1.14/packages/core/locales/ru.global.js'></script>
 	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-		<script>
-
+	<script>
 		document.addEventListener('DOMContentLoaded', function () {
 			var calendarEl = document.getElementById('calendar');
 			var calendar = new FullCalendar.Calendar(calendarEl, {
-				height: 'auto',
+				initialView: 'timeGridWeek',
+				locale: 'ru',
 				slotDuration: '00:15:00',
 				nowIndicator: true,
-				locale: 'ru',
-				initialView: 'timeGridWeek',
-				events: @Html.Raw(Model.TasksJson),
-				eventClick: function (info) {
-					$('#taskModalLabel').text('Редактировать задачу');
-					$('#taskId').val(info.event.id);
-					$('#taskTitle').val(info.event.title);
-					$('#taskStartDateTime').val(info.event.start.toISOString().slice(0, 16));
-					$('#taskEndDateTime').val(info.event.end.toISOString().slice(0, 16));
-					$('#taskDescription').val(info.event.description);
-					$('#taskType').val(info.event.extendedProps.taskTypeId);
-					$('#taskFrequency').val(info.event.extendedProps.repeatFrequency);
-
-					$('#taskModal').modal('show');
+				headerToolbar: {
+					left: 'title',
+					right: 'today prev,next',
 				},
-				eventMouseEnter: function (info) {
-					$(info.el).tooltip({
-						title: info.event.extendedProps.description,
-						placement: 'top',
-						trigger: 'hover',
-						container: 'body'
-					}).tooltip('show');
+				events: '/Calendar?handler=Tasks',
+				eventClick: function (info) {
+					openTaskModal(info.event);
+				},
+				eventContent: function (arg) {
+					let content = document.createElement('div');
+					let startTime = arg.event.start ? arg.event.start.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : 'Не указано';
+					let endTime = arg.event.end ? arg.event.end.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : 'Не указано';
+
+					content.innerHTML = `
+								<b>${arg.event.title}</b><br>
+								${arg.event.extendedProps.status}<br>
+								${startTime} - ${endTime}
+							`;
+					return { domNodes: [content] }
+				},
+				eventDidMount: function (info) {
+					$(info.el).css('background-color', info.event.backgroundColor);
+					$(info.el).hover(
+						function () { $(this).css('filter', 'brightness(85%)'); },
+						function () { $(this).css('filter', ''); }
+					);
+
+					$(info.el).contextmenu(function (e) {
+						e.preventDefault();
+						showContextMenu(e, info.event);
+					});
 				}
 			});
 			calendar.render();
 
-			$('#taskForm').on('submit', function (e) {
+			function showContextMenu(e, event) {
 				e.preventDefault();
+				if ($('#contextMenu').length > 0) {
+					$('#contextMenu').remove();
+				}
 
-				var task = {
-					id: $('#taskId').val(),
-					title: $('#taskTitle').val(),
-					start: $('#taskStartDateTime').val(),
-					end: $('#taskEndDateTime').val(),
-					description: $('#taskDescription').val(),
-					taskTypeId: $('#taskType').val(),
-					repeatFrequency: $('#taskFrequency').val()
-				};
-				var url = task.id ? '@Url.Page("/Tasks/Calendar", "UpdateTask")' : '@Url.Page("/Tasks/Calendar", "CreateTask")';
-				var method = task.id ? 'POST' : 'POST';
+				$('body').append(`
+							<div id="contextMenu" class="dropdown-menu" style="display:block; position:fixed; left:${e.pageX}px; top:${e.pageY}px;">
+								<a class="dropdown-item" href="#" id="completeTask">Выполнить</a>
+								<a class="dropdown-item" href="#" id="deleteTaskContext">Удалить</a>
+							</div>
+						`);
+				$('#completeTask').click(function () {
+					completeTask(event);
+					$('#contextMenu').remove();
+				});
+
+				$('#deleteTaskContext').click(function () {
+					deleteTask(event.id);
+					$('#contextMenu').remove();
+				});
+
+				$(document).click(function () {
+					$('#contextMenu').remove();
+				});
+			}
+
+			function completeTask(event) {
 				$.ajax({
-					url: url,
-					method: method,
+					url: '/Calendar?handler=CompleteTask',
+					type: 'POST',
+					data: JSON.stringify({ id: event.id }),
 					contentType: 'application/json',
-					data: JSON.stringify(task),
-					success: function () {
-						calendar.refetchEvents();
-						$('#taskModal').modal('hide');
+					headers: {
+						'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
 					},
-					error: function () {
-						alert('Ошибка при сохранении задачи');
+					success: function (result) {
+						calendar.refetchEvents();
+					},
+					error: function (error) {
+						console.error('Error completing task:', error.status);
 					}
 				});
-			});
+			}
+
+			function openTaskModal(event) {
+				var modal = $('#taskModal');
+				var form = $('#taskForm')[0];
+				form.reset();
+
+				if (event) {
+					$('#taskId').val(event.id);
+					$('#taskTitle').val(event.title);
+					$('#startDateTime').val(moment(event.start).format('YYYY-MM-DDTHH:mm'));
+					$('#endDateTime').val(moment(event.end).format('YYYY-MM-DDTHH:mm'));
+					$('#description').val(event.extendedProps.description);
+					$('#taskTypeId').val(event.extendedProps.taskTypeId);
+					$('#frequency').val(event.extendedProps.frequency);
+					$('#taskStatus').val(event.extendedProps.status);
+					$('#completeTask').toggle(event.extendedProps.status !== 'Completed');
+					$('#deleteTask').show();
+				} else {
+					form.reset();
+					$('#taskId').val('');
+					$('#taskStatus').val('Pending');
+					$('#completeTask').hide();
+					$('#deleteTask').hide();
+				}
+
+				modal.modal('show');
+			}
+
+			$('#saveTask').click(function () {
+				if ($('#taskForm')[0].checkValidity()) {
+				var startDate = new Date(moment($('#startDateTime').val()).format('YYYY-MM-DDTHH:mm'));
+				var endDate = new Date(moment($('#endDateTime').val()).format('YYYY-MM-DDTHH:mm'));
+				if (!(startDate.toDateString() == endDate.toDateString())) {
+					alert('Дата окончания должна быть в тот же день, что и дата начала.');
+					return;
+				} else if (startDate > endDate) {
+					alert('Дата окончания не может быть раньше даты начала.');
+					return;
+				}
+
+				var taskData = {
+					id: parseInt($('#taskId').val()) ? parseInt($('#taskId').val()) : 0,
+					taskTitle: $('#taskTitle').val(),
+					startDateTime: moment($('#startDateTime').val()).format('YYYY-MM-DDTHH:mm'),
+					endDateTime: moment($('#endDateTime').val()).format('YYYY-MM-DDTHH:mm'),
+					description: $('#description').val(),
+					taskTypeId: parseInt($('#taskTypeId').val()),
+					taskType: { id: parseInt($('#taskTypeId').val()) },
+					frequency: parseInt($('#frequency').val()),
+					status: 1
+				};
+
+				var url = taskData.id ? "/Calendar?handler=UpdateTask" : "/Calendar?handler=SaveTask"
+
+				$.ajax({
+					url: url,
+					type: 'POST',
+					data: JSON.stringify(taskData),
+					contentType: 'application/json',
+					headers: {
+						'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+					},
+					success: function (result) {
+						$('#taskModal').modal('hide');
+						$('body').removeClass('modal-open');
+						$('.modal-backdrop').remove();
+						calendar.refetchEvents();
+					},
+					error: function (error) {
+						console.error('Error saving task:', error.status);
+					}
+				});
+			} else {
+				$('#taskForm')[0].reportValidity();
+			}
 		});
+
+			function deleteTask(taskId) {
+				if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
+					$.ajax({
+						url: '/Calendar?handler=DeleteTask',
+						type: 'POST',
+						data: JSON.stringify({ id: taskId }),
+						contentType: 'application/json',
+						headers: {
+							'RequestVerificationToken': $('input:hidden[name="__RequestVerificationToken"]').val()
+						},
+						success: function (result) {
+							$('#taskModal').modal('hide');
+							$('body').removeClass('modal-open');
+							$('.modal-backdrop').remove();
+							calendar.refetchEvents();
+						},
+						error: function (error) {
+							console.error('Error deleting task:', error.status);
+						}
+					});
+				}
+			}
+
+			$('#deleteTask').click(function () {
+				var taskId = $('#taskId').val();
+				deleteTask(taskId);
+			});
+
+			document.getElementById('addTaskButton').addEventListener('click', function () {
+				resetTaskForm();
+				var modal = new bootstrap.Modal(document.getElementById('taskModal'));
+				modal.show();
+			});
+
+			function resetTaskForm() {
+				$('#taskForm')[0].reset();
+				$('#taskId').val('');
+				$('#deleteTask').hide();
+			}
+		});
+
 	</script>
 }
-
-
-
-
